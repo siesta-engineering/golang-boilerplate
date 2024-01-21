@@ -149,7 +149,7 @@ Logging in Go serves the purpose or recording or printing messages to a log serv
 
   </details>
 
-  The result of this implementation looks like this
+  The result of this implementation looks like this. Run with command `go run implementation/log/current/log.go`
   <details>
   <summary>Click here</summary>
 
@@ -326,7 +326,7 @@ Logging in Go serves the purpose or recording or printing messages to a log serv
 
   </details>
 
-  My recommendation implementation will looks like this
+  My recommendation implementation will looks like this. Run with `go run implementation/log/recommendation/log.go`
 
   <details>
   <summary>Click here</summary>
