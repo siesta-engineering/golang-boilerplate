@@ -5,4 +5,4 @@ Here a some parts that i recommend to improve Golang application development in 
 
 - `context.Context`: Implementation of `context.Context` at [here](./implementation/context/).
 - `log`: Log implementation to make it more clearer and easier at [here](./implementation/log/).
-- `error`: Implementation of error handling to make it more flexible and easy to recognized to determine the right steps in handlingeach error.
+- `error`: Implementation of error handling to make it more flexible and easy to recognized to determine the right steps in handling each error [here](./implementation/error/).
