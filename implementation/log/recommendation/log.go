@@ -6,46 +6,68 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/irdaislakhuafa/go-sdk/appcontext"
+	"github.com/irdaislakhuafa/go-sdk/log"
+	"github.com/rs/zerolog"
 )
 
 func main() {
+	// Read Order: 1
+	// We can initialize log interface at first program running
+	// We can save level configuration at ".env" or other location that make we (developer) easier to customize
+	log := log.Init(log.Config{Level: zerolog.LevelDebugValue})
+
+	// Read Order: 2
 	// Imagine this is middleware layer
-	ctx := ExampleMiddleware()
+	ctx := ExampleMiddleware(log)
 
-	uc := NewExampleUsecase()
+	uc := NewExampleUsecase(log)
 
+	// Read Order: 6
 	params := Entity{ID: uuid.NewString()}
 	// We create data into db with context.Context
 	result, err := uc.Create(ctx, params)
 	if err != nil {
 		panic(err)
 	}
-	fmt.Printf("result: %#v\n", result)
 
+	log.Info(ctx, fmt.Sprintf("result: %+v\n", result))
+
+	// Read Order: 9
+	// In real implementation, different method is in different request, so they will have different context automatically
+	ctx = ExampleMiddleware(log)
 	// We get list data from db
 	results, err := uc.GetList(ctx)
 	if err != nil {
 		panic(err)
 	}
-	fmt.Printf("results: %#v\n", results)
+	log.Info(ctx, fmt.Sprintf("results: %+v\n", results))
+
 }
 
+// Read Order: 3
 // Imagine this is middleware layer
-const CtxKeyUserID = "user_id"
-
-func ExampleMiddleware(args ...any) context.Context {
+func ExampleMiddleware(log log.Interface, args ...any) context.Context {
+	// Read Order: 4
+	// Imagine this is context from r.Context()
 	ctx := context.Background()
 
-	// Read Order: 2
-	// For usecase like "Create()" we can handle auth here and passed user_id into context value
-	// Do some logic to authenticate user
-	ctx = context.WithValue(ctx, CtxKeyUserID, uuid.NewString())
+	authenticateUser := func(ctx context.Context) (Entity, error) {
+		return Entity{ID: uuid.NewString(), Name: "Irda Islakhu Afa"}, nil
+	}
 
-	// Read Order: 4
-	// For usecase like "GetList" we can setting timeout ot operation in context, as example we set maximum timeout is 5 seconds
-	// We can save timeout configuration in ".env" or other resource to make it more flexible to customize
-	ctx, cancel := context.WithTimeout(ctx, time.Second*5)
-	defer cancel() // this method will be executed if operation take more than 5 seconds to complete and this method will stopped all operation that uses this context
+	// Do some logic to authenticate user
+	user, err := authenticateUser(ctx)
+	if err != nil {
+		log.Error(ctx, fmt.Sprintf("failed authenticate user, %v", err))
+		return ctx
+	}
+
+	// Read Order: 5
+	// we can set user_id in context as request_id to track specific user request if many clients access same resource simultaneously
+	ctx = appcontext.SetRequestID(ctx, user.ID)
+	// We can set start time execution of each operation in middleware to know which operation takes slowest time to be executed, time will added automatically to logs based on time value in context
+	ctx = appcontext.SetRequestStartTime(ctx, time.Now())
 
 	// Imagine this context is used in http.Request
 	return ctx
@@ -67,36 +89,59 @@ type ExampleUsecase interface {
 }
 
 type exampleUsecaseImpl struct {
+	log log.Interface
 }
 
-func NewExampleUsecase() ExampleUsecase {
-	return &exampleUsecaseImpl{}
+func NewExampleUsecase(log log.Interface) ExampleUsecase {
+	return &exampleUsecaseImpl{
+		log: log,
+	}
 }
 
 func (eu *exampleUsecaseImpl) Create(ctx context.Context, params Entity) (Entity, error) {
-	// Read Order: 1
+	// Read Order: 7
+	// Developers do not need to write code location or other information every time they use logs
+	eu.log.Info(ctx, "create data")
+
+	// Imagine this is method from repository
+	createToDB := func(params Entity) (Entity, error) {
+		time.Sleep(time.Second * 5)
+		return params, nil
+	}
+
 	// Code to save the entity to database
-	// ASK: but we want to know who the user created this data, how we can do it?
+	result, err := createToDB(params)
+	if err != nil {
+		// Read Order: 8
+		eu.log.Error(ctx, err)
+		return Entity{}, err
+	}
 
-	// With context we can get addition information without modifying the function or interfaces like below
-	params.CreatedBy = ctx.Value(CtxKeyUserID).(string)
+	eu.log.Info(ctx, "returning response")
 
-	// Save to DB
-
-	return params, nil
+	return result, nil
 }
 
 func (eu *exampleUsecaseImpl) GetList(ctx context.Context) ([]Entity, error) {
-	results := []Entity{}
+	// Read Order: 10
+	// Developers do not need to write code location or other information every time they use logs
+	eu.log.Info(ctx, "get list data")
 
-	// Read Order: 3
-	// Imagine when database performance is down
-	// ASK: cliens will wait fora long time to complete their requests, how do we handle this?
+	// Imagine this is method to get list data from repository
+	getListData := func() ([]Entity, error) {
+		time.Sleep(time.Second * 5)
+		return []Entity{}, nil
+	}
 
-	/*
-		With context, we don't need to do anything here if we have used context in all methods, because in "context.Context" which is used in "GetList()" methods the operation will stop automatically if the previously determined timout has passed (at Read Order: 4).
-		"eu.repository.GetList(ctx)"
-	*/
+	// Read Order: 2
+	// Imagine when database performance is down and the server takes several minutes to retrieve data because it needs optimization when querying the database afte a lot data has been stored.
+	results, err := getListData()
+	if err != nil {
+		// Read Order: 11
+		eu.log.Error(ctx, err)
+		return nil, err
+	}
 
+	eu.log.Info(ctx, "returning response")
 	return results, nil
 }

@@ -1,7 +1,7 @@
 package main
 
 import (
-	"fmt"
+	"time"
 
 	"github.com/gofiber/fiber/v2/log"
 
@@ -17,14 +17,15 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	fmt.Printf("result: %#v\n", result)
+
+	log.Infof("result: %+v", result)
 
 	// We get list data from db
 	results, err := uc.GetList()
 	if err != nil {
 		panic(err)
 	}
-	fmt.Printf("results: %#v\n", results)
+	log.Infof("results: %+v\n", results)
 }
 
 type Entity struct {
@@ -48,10 +49,11 @@ func NewExampleUsecase() ExampleUsecase {
 }
 
 func (eu *exampleUsecaseImpl) Create(params Entity) (Entity, error) {
-	log.Infof("STATE USECASE -> Create(), execute method to create data")
+	log.Info("STATE USECASE -> Create(), execute method to create data")
 
 	// Imagine this is method from repository
 	createToDB := func(params Entity) (Entity, error) {
+		time.Sleep(time.Second * 5)
 		return params, nil
 	}
 
@@ -70,14 +72,17 @@ func (eu *exampleUsecaseImpl) Create(params Entity) (Entity, error) {
 		- why don't we create a log interface that tells us specifically on which line of this error occurred?
 		- how do we track the logs for specific user_id = XXX that we use to track errors if many clients access them simultaneously?
 	*/
+
+	log.Info("STATE USECASE -> Create(), returning response")
 	return result, nil
 }
 
 func (eu *exampleUsecaseImpl) GetList() ([]Entity, error) {
-	log.Errorf("STATE USECASE -> GetList(), get list data")
+	log.Info("STATE USECASE -> GetList(), get list data")
 
 	// Imagine this is method to get list data from repository
 	getListData := func() ([]Entity, error) {
+		time.Sleep(time.Second * 5)
 		return []Entity{}, nil
 	}
 
@@ -93,6 +98,6 @@ func (eu *exampleUsecaseImpl) GetList() ([]Entity, error) {
 		ASK:
 		- how do we know which line of code takes the slowest time to execute if we intergate this method with other technology? how do we know how long this operation takes to execute?
 	*/
-
+	log.Info("STATE USECASE -> GetList(), returning response")
 	return results, nil
 }
