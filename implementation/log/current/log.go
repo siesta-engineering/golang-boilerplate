@@ -3,6 +3,8 @@ package main
 import (
 	"fmt"
 
+	"github.com/gofiber/fiber/v2/log"
+
 	"github.com/google/uuid"
 )
 
@@ -46,16 +48,51 @@ func NewExampleUsecase() ExampleUsecase {
 }
 
 func (eu *exampleUsecaseImpl) Create(params Entity) (Entity, error) {
+	log.Infof("STATE USECASE -> Create(), execute method to create data")
+
+	// Imagine this is method from repository
+	createToDB := func(params Entity) (Entity, error) {
+		return params, nil
+	}
+
 	// Read Order: 1
 	// Code to save the entity to database
-	// ASK: but we want to know who the user created this data, how we can do it?
-	return params, nil
+	result, err := createToDB(params)
+	if err != nil {
+		// Developer need to write where this error occurred manually for each logs
+		// If the code in the "Create()" method layer of this usecase has reached many lines, it will take time to find out where the error line occurs.
+		log.Errorf("STATE USECASE -> Create(), err: %v", err)
+		return Entity{}, err
+	}
+
+	/*
+		ASK:
+		- why don't we create a log interface that tells us specifically on which line of this error occurred?
+		- how do we track the logs for specific user_id = XXX that we use to track errors if many clients access them simultaneously?
+	*/
+	return result, nil
 }
 
 func (eu *exampleUsecaseImpl) GetList() ([]Entity, error) {
-	results := []Entity{}
+	log.Errorf("STATE USECASE -> GetList(), get list data")
+
+	// Imagine this is method to get list data from repository
+	getListData := func() ([]Entity, error) {
+		return []Entity{}, nil
+	}
+
 	// Read Order: 2
-	// Imagine when database performance is down
-	// ASK: cliens will wait fora long time to complete their requests, how do we handle this?
+	// Imagine when database performance is down and the server takes several minutes to retrieve data because it needs optimization when querying the database afte a lot data has been stored.
+	results, err := getListData()
+	if err != nil {
+		log.Errorf("STATE USECASE -> GetList(), %v", err)
+		return nil, err
+	}
+
+	/*
+		ASK:
+		- how do we know which line of code takes the slowest time to execute if we intergate this method with other technology? how do we know how long this operation takes to execute?
+	*/
+
 	return results, nil
 }
