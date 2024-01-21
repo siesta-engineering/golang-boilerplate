@@ -21,3 +21,30 @@ Logging in Go serves the purpose or recording or printing messages to a log serv
 - Facilitating Maintenance
 
   Logs also provide insight during development process, helping developers to understand the program excution flow and capturing information along the way. This help developers for maintenance and ongoing development.
+
+## Implementation
+
+- Current
+
+  Currently the Go application in SIESTA has implemented log, but in my personal opinion is not very efficient, because the developer needs to write which layer this code executed every time it logs and wherre this error occurs.
+
+  Several weakness in current implementation of logs in SIESTA:
+
+  1. The current log implementation cannot be used to monitor the execution time of each operation.
+  2. Doesn't tell the developer the specific part of the code where the error occured. Developers needs to track the error manually by messages
+  3. Cannot track errors on specific clients, whis will make difficult for developers to handle problems with specific operations if the application is being accessed by many clients.
+
+  There following is an example of the log that siesta currently implements
+
+  <details>
+  <summary>Click here</summary>
+
+  ```go
+
+  fmt.Println("Hello World")
+
+  ```
+
+  </details>
+
+- Recommendation
